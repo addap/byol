@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #include <editline/readline.h>
@@ -20,8 +18,6 @@ typedef struct lval {
 
 /* Declare enum for possible lval types*/
 enum { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR };
-/* Decalre enum for possible error typer*/
-enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM, LERR_BAD_DEC, LERR_NEG_POWER, LERR_BAD_TYPE };
 
 /* Creates a new number lval*/
 lval* lval_num (long x) {
@@ -154,8 +150,7 @@ lval* builtin_op (lval* rands, char* rator) {
   lval* x = lval_pop (rands, 0);
 
   /* Perform unary negation if necessary */
-  /* todo does not work */
-  if ((strcmp (rator, "-"))
+  if ((strcmp (rator, "-") == 0)
       && (rands->count == 0)) {
     x->num = - x->num;
   }
@@ -163,7 +158,6 @@ lval* builtin_op (lval* rands, char* rator) {
   while (rands->count > 0) {
     lval* y = lval_pop (rands, 0);
 
-    
     if (strcmp (rator, "+") == 0) { x->num += y->num; }
     else if (strcmp (rator, "-") == 0) { x->num -= y->num; }
     else if (strcmp (rator, "*") == 0) { x->num *= y->num; }
@@ -176,7 +170,6 @@ lval* builtin_op (lval* rands, char* rator) {
       } else {
 	x->num /= y->num;
       }
-      break;
     }
 
     lval_del (y);
@@ -203,10 +196,11 @@ lval* lval_eval_sexpr (lval* v) {
   /* Empty expressions are just returned  */
   if (v->count == 0) { return v; }
 
-  /* Why would you just return single expressions. they should be evaluated */
+  /* todo: Why would you just return single expressions. they should be evaluated */
   if (v->count == 1) { return lval_take (v, 0); }
 
   /* Ensure first element is symbol */
+  /* todo numbers should be symbol and every symbol should have a function and a value slot */
   lval* f = lval_pop (v, 0);
   if (f->type != LVAL_SYM) {
     lval_del (f);
@@ -301,11 +295,11 @@ int main (int argc, char**argv) {
       lval* res_read = lval_read (r.output);
       lval_println (res_read);
       
-      /* lval* res_eval = lval_eval (res_read); */
-      /* lval_println (res_eval); */
+      lval* res_eval = lval_eval (res_read);
+      lval_println (res_eval);
 
-      lval_del (res_read);
-      /* lval_del (res_eval); */
+      /* lval_del (res_read); */
+      lval_del (res_eval);
       mpc_ast_delete(r.output);
     } else {
       mpc_err_print(r.error);

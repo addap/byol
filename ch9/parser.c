@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #include <editline/readline.h>
@@ -20,8 +18,6 @@ typedef struct lval {
 
 /* Declare enum for possible lval types*/
 enum { LVAL_NUM, LVAL_ERR, LVAL_SYM, LVAL_SEXPR };
-/* Decalre enum for possible error typer*/
-enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM, LERR_BAD_DEC, LERR_NEG_POWER, LERR_BAD_TYPE };
 
 /* Creates a new number lval*/
 lval* lval_num (long x) {
@@ -150,13 +146,14 @@ lval* builtin_op(lval* a, char* op) {
       return lval_err("Cannot operate on non-number!");
     }
   }
+<<<<<<< HEAD
   /* Pop the first element */
   lval* x = lval_pop(a, 0);
   /* If no arguments and sub then perform unary negation */
   if ((strcmp(op, "-") == 0) && a->count == 0) {
     x->num = -x->num;
-  }
-  /* While there are still elements remaining */
+
+	/* While there are still elements remaining */
   while (a->count > 0) {/* Pop the next element */
     lval* y = lval_pop(a, 0);
     /* Perform operation */
@@ -164,12 +161,13 @@ lval* builtin_op(lval* a, char* op) {
     if (strcmp(op, "-") == 0) { x->num -= y->num; }
     if (strcmp(op, "*") == 0) { x->num *= y->num; }
     if (strcmp(op, "/") == 0) {
-      if (y->num == 0) {
-	lval_del(x); lval_del(y);
-	x = lval_err("Division By Zero.");
-	break;
-      }
+		if (y->num == 0) {
+			lval_del(x); lval_del(y);
+			x = lval_err("Division By Zero.");
+			break;
+		}
       x->num /= y->num;
+      break;
     }
     /* Delete element now finished with */
     lval_del(y);
@@ -194,6 +192,12 @@ lval* lval_eval_sexpr(lval* v) {
   if (v->count == 1) { return lval_take(v, 0); }
   /* Ensure First Element is Symbol */
   lval* f = lval_pop(v, 0);
+
+  /* Why would you just return single expressions. they should be evaluated */
+  if (v->count == 1) { return lval_take (v, 0); }
+
+  /* Ensure first element is symbol */
+  lval* f = lval_pop (v, 0);
   if (f->type != LVAL_SYM) {
     lval_del(f); lval_del(v);
     return lval_err("S-expression Does not start with symbol.");

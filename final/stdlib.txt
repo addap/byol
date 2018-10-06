@@ -1,0 +1,36 @@
+(def {nil} {})
+(def {true} 1)
+(def {false} 0)
+(def {fun} (\ {args body}
+                {def (list (head args)) (\ (tail args) body)}
+                ))
+(fun {unpack f l}
+    {eval (join (list f) l)})
+
+(fun {pack f & ls}
+    {f ls})
+(def {curry} unpack)
+(def {uncurry} pack)
+(fun {do & l}
+    {if (== l nil)
+        {nil}
+        {last l}})
+
+; Open new scope
+(fun {let b}
+    {((\ {} b))})
+
+; Logical Operations
+; todo real booleans so that e.g. (not nil) works
+(fun {not x} {- 1 x})
+(fun {or x y} {+ x y})
+(fun {and x y} {* x y})
+
+; Misc
+(fun {flip f a b} {f b a})
+(fun {comp f g x} {f (g x)})
+
+; More library functions like map, fold, cond, etc.
+
+
+

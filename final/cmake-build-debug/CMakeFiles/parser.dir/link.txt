@@ -1,0 +1,1 @@
+/bin/cc -g   CMakeFiles/parser.dir/builtins.c.o CMakeFiles/parser.dir/lval.c.o CMakeFiles/parser.dir/mpc.c.o CMakeFiles/parser.dir/parser.c.o  -o parser -lreadline 

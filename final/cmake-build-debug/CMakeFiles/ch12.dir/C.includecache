@@ -1,0 +1,38 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/adrian/programming/byol/ch12/lval.h
+mpc.h
+/home/adrian/programming/byol/ch12/mpc.h
+
+/home/adrian/programming/byol/ch12/mpc.h
+stdlib.h
+-
+stdio.h
+-
+stdarg.h
+-
+string.h
+-
+math.h
+-
+errno.h
+-
+ctype.h
+-
+
+/home/adrian/programming/byol/ch12/parser.c
+stdio.h
+-
+assert.h
+-
+editline/readline.h
+-
+lval.h
+/home/adrian/programming/byol/ch12/lval.h
+

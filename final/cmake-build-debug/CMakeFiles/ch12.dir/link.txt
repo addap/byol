@@ -1,0 +1,1 @@
+/bin/cc -g   CMakeFiles/ch12.dir/builtins.c.o CMakeFiles/ch12.dir/lval.c.o CMakeFiles/ch12.dir/mpc.c.o CMakeFiles/ch12.dir/parser.c.o  -o ch12 -lreadline 

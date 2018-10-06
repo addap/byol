@@ -1,9 +1,0 @@
-// a b strings
-[ab]*
-
-// consecutive a b
-(ab?)*
-
-//Write a regular expression matching pit, pot, respite but not peat, spit, or part.
-^(res)?p[io]t
-

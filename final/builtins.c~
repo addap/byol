@@ -1,0 +1,196 @@
+lval* builtin_op (lenv* e, lval* rands, char* rator) {
+	LASSERT(rands, (rands->count >= 1), 0, NULL, rator, "needs at least 1 argument");
+	
+    /* Check if all numbers */
+    for (unsigned int i = 0; i < rands->count; i++) {
+		TASSERT(rands, i, LVAL_NUM, 0, NULL, rator);
+    }
+
+    lval* x = lval_pop (rands, 0);
+
+    /* Perform unary negation if necessary */
+    if ((strcmp (rator, "-") == 0)
+		&& (rands->count == 0)) {
+		x->num = - x->num;
+    }
+
+    while (rands->count > 0) {
+		lval* y = lval_pop (rands, 0);
+
+		if (strcmp (rator, "+") == 0) { x->num += y->num; }
+		else if (strcmp (rator, "-") == 0) { x->num -= y->num; }
+		else if (strcmp (rator, "*") == 0) { x->num *= y->num; }
+		else if (strcmp (rator, "/") == 0) {
+			if (y->num == 0) {
+				lval_del (3, x, rands, y);
+				return lval_err ("Division by zero!");
+			} else {
+				x->num /= y->num;
+			}
+		}
+
+		lval_del (1, y);
+    }
+
+    lval_del (1, rands);
+    return x;
+}
+
+lval* builtin_add (lenv* e, lval* a) {
+	return builtin_op(e, a, "+");
+}
+
+lval* builtin_sub (lenv* e, lval* s) {
+	return builtin_op(e, s, "-");
+}
+
+lval* builtin_mul (lenv* e, lval* m) {
+	return builtin_op(e, m, "*");
+}
+
+lval* builtin_div (lenv* e, lval* d) {
+	return builtin_op(e, d, "/");
+}	
+
+lval* builtin_head (lenv* e, lval* v) {
+	CASSERT(v, 1, 0, NULL, "builtin_head");
+	TASSERT(v, 0, LVAL_QEXPR, 0, NULL, "builtin_head");
+	EASSERT(v, 0, NULL, "builtin_head");
+  
+	return lval_take (lval_take (v, 0), 0);
+}
+
+lval* builtin_tail (lenv* e, lval* v) {
+	CASSERT(v, 1, 0, NULL, "builtin_tail");
+	TASSERT(v, 0, LVAL_QEXPR, 0, NULL, "builtin_tail");
+	EASSERT(v, 0, NULL, "builtin_tail");
+
+    lval* a = lval_take (v, 0);
+    lval_del (1, lval_pop (a, 0));
+
+    return a;
+}
+
+lval* builtin_list (lenv* e, lval* v) {
+	v->type = LVAL_QEXPR;
+	return v;
+}
+
+lval* lval_eval (lenv* e, lval* v);
+
+lval* builtin_eval (lenv* e, lval* v) {
+	CASSERT(v, 1, 0, NULL, "builtin_eval");
+	TASSERT(v, 0, LVAL_QEXPR, 0, NULL, "builtin_eval");
+	lval* a = lval_take(v, 0);
+	a->type = LVAL_SEXPR;
+	return lval_eval(e, a);
+}
+
+lval* builtin_print_env (lenv* e, lval* v) {
+	lenv_print(e);
+	return lval_sexpr();
+}
+
+lval* builtin_join (lenv* e, lval* x) {
+	for (int i = 0; i < x->count; i++) {
+		TASSERT(x, i, LVAL_QEXPR, 0, NULL, "builtin_join");
+	}
+
+	lval* a = lval_pop(x, 0);
+
+	while (x->count) {
+		a = lval_join(a, lval_pop(x, 0));
+	}
+	
+	lval_del(1, x);
+	return a;
+}
+
+lval* builtin_cons (lenv* e, lval* v) {
+	CASSERT(v, 2, 0, NULL, "builtin_cons");
+	TASSERT(v, 1, LVAL_QEXPR, 0, NULL, "builtin_cons");
+
+	lval* val = lval_pop(v, 0);
+	lval* qexpr = lval_pop(v, 0);
+	lval_del(1, v);
+
+	return lval_prepend(qexpr, val);
+}
+
+lval* builtin_len (lenv* e, lval* v) {
+	CASSERT(v, 1, 0, NULL, "builtin_len");
+	TASSERT(v, 0, LVAL_QEXPR, 0, NULL, "builtin_len");
+
+	return lval_num(v->cell[0]->count);
+}
+
+lval* builtin_init (lenv* e, lval* v) {
+	CASSERT(v, 1, 0, NULL, "builtin_init");
+	TASSERT(v, 0, LVAL_QEXPR, 0, NULL, "builtin_init");
+
+	lval* a = lval_take(v, 0);
+	lval_del(1, lval_pop(a, a->count - 1));
+	return a;
+}
+
+lval* builtin_var (lenv* e, lval* a, char* func) {
+	TASSERT(a, 0, LVAL_QEXPR, 0, NULL, func);
+	
+	lval* symbols = lval_pop(a, 0);
+	
+	for (int i = 0; i < symbols->count; i++) {
+		TASSERT(symbols, i, LVAL_SYM, 1, a, func);
+	}
+
+	CASSERT(symbols, a->count, 1, a, func);
+
+	for (int i = 0; i < symbols->count; i++) {
+		if (strcmp (func, "def") == 0) {
+			lenv_def(e, symbols->cell[i], a->cell[i]);
+		} else if (strcmp (func, "=") == 0) {
+			lenv_put(e, symbols->cell[i], a->cell[i]);
+		} else {
+			fprintf(stderr, "Blame bad architecture, why is this not =?");
+			exit(1);
+		}
+	}
+
+	lval_del(2, symbols, a);
+	return lval_sexpr();
+}
+
+lval* builtin_def (lenv* e, lval* a) {
+	return builtin_var(e, a, "def");
+}
+
+lval* builtin_put (lenv* e, lval* a) {
+	return builtin_var(e, a, "=");
+}
+
+lval* builtin_exit (lenv* e, lval* a) {
+	exit(0);
+	return lval_sexpr();
+}
+
+lval* builtin_print (lenv* e, lval* a) {
+	CASSERT(a, 1, 0, NULL, "print");
+	lval* v = lval_take(a, 0);
+	lval_println(v);
+	return lval_sexpr();
+}
+
+lval* builtin_lambda (lenv* e, lval* a) {
+	CASSERT(a, 2, 0, NULL, "\\");
+	TASSERT(a, 0, LVAL_QEXPR, 0, NULL, "\\");
+	TASSERT(a, 1, LVAL_QEXPR, 0, NULL, "\\");
+
+	for (int i = 0; i < a->cell[0]->count; i++) {
+		TASSERT(a->cell[0], i, LVAL_SYM, 0, NULL, "\\");
+	}
+	
+	lval* formals = lval_pop(a, 0);
+	lval* body = lval_pop(a, 0);
+	lval_del(1, a);
+ 
+	return lval_lambda(formals, body);
+}
